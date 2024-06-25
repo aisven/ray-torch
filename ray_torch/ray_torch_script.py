@@ -17,9 +17,8 @@ from ray_torch.constant.constant import one_over_255
 from ray_torch.constant.constant import two_55
 from ray_torch.constant.constant import zero_dot_zero
 from ray_torch.constant.constant import zero_vector_float
-from ray_torch.constant.constant import zero_vector_int
 from ray_torch.intersection.intersection import intersect_rays_with_spheres
-from ray_torch.plot.plot import plot_rgb_image
+from ray_torch.plot.plot import plot_rgb_image_with_actual_size
 from ray_torch.plot.plot import plot_vectors_with_color_by_norm
 from ray_torch.plot.plot import plot_vectors_with_color_by_z_value
 from ray_torch.utility.utility import create_tensor_on_device
@@ -272,8 +271,9 @@ print(f"colors_d_mixed_01[middle_pixel_index]={colors_d_mixed_01[middle_pixel_in
 
 # plots
 
-plot_rgb_image(spheres_rgb_hit, background_mask, resx_int_py, resy_int_py)
-plot_rgb_image(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
+plot_rgb_image_with_actual_size(spheres_rgb_hit, background_mask, resx_int_py, resy_int_py)
+plot_rgb_image_with_actual_size(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
+plot_rgb_image_with_actual_size(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
 
 plot_all = False
 
