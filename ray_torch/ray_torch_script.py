@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as tf
 
@@ -14,12 +13,16 @@ from ray_torch.camera.camera import resx_int_py
 from ray_torch.camera.camera import resy
 from ray_torch.camera.camera import resy_int_py
 from ray_torch.constant.constant import one_dot_zero
+from ray_torch.constant.constant import one_over_255
+from ray_torch.constant.constant import two_55
 from ray_torch.constant.constant import zero_dot_zero
 from ray_torch.constant.constant import zero_vector_float
 from ray_torch.constant.constant import zero_vector_int
 from ray_torch.intersection.intersection import intersect_rays_with_spheres
+from ray_torch.plot.plot import plot_rgb_image
 from ray_torch.plot.plot import plot_vectors_with_color_by_norm
 from ray_torch.plot.plot import plot_vectors_with_color_by_z_value
+from ray_torch.utility.utility import create_tensor_on_device
 from ray_torch.utility.utility import device
 from ray_torch.utility.utility import is_float_tensor_on_device
 from ray_torch.utility.utility import see
@@ -199,27 +202,16 @@ spheres_rgb_hit = spheres_rgb[spheres_index_hit]
 see("spheres_rgb_hit", spheres_rgb_hit)
 assert spheres_rgb_hit.shape == (n_pixels, 3)
 
-img_rgb = spheres_rgb_hit.clone()
-img_rgb[background_mask] = zero_vector_int
-img_rgb_view = img_rgb.view(resx_int_py, resy_int_py, 3)
-img_rgb_view_permuted = img_rgb_view.permute(1, 0, 2)
-assert img_rgb_view_permuted.shape == (resy_int_py, resx_int_py, 3)
-plt.imshow(img_rgb_view_permuted)
-plt.show()
-
-
-plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], 'terrain')
-
-
-plot_vectors_with_color_by_norm(surface_normals_hit, foreground_mask_with_0, [0, 12], 'terrain')
-
 
 # compute illumination based on point lights, intersections, surface normals
 
 
-def compute_lighting_diffuse_component_1_point_light(points_hit, foreground_mask, background_mask, surface_normals_hit_unit, eye, spheres_rgb, point_light_position, point_light_rgb):
+def compute_lighting_diffuse_component_1_point_light(points_hit, foreground_mask, background_mask, surface_normals_hit_unit, spheres_rgb, spheres_index_hit, point_light_position, point_light_rgb):
+    spheres_rgb_hit = spheres_rgb[spheres_index_hit]
+    spheres_rgb_hit_01 = torch.mul(spheres_rgb_hit, one_over_255)
+    point_light_rgb_01 = torch.mul(point_light_rgb, one_over_255)
     # weighting factor for diffuse component
-    k_d = 0.7
+    k_d = create_tensor_on_device(0.7)
     # number of intersections
     n_points_hit = points_hit.shape[0]
     # make a tensor that contains one copy of the point light position per intersection
@@ -239,9 +231,34 @@ def compute_lighting_diffuse_component_1_point_light(points_hit, foreground_mask
     see_more("point_light_rays_unit_norm", point_light_rays_unit_norm, False)
     assert is_float_tensor_on_device(point_light_rays_unit_norm)
     assert torch.allclose(point_light_rays_unit_norm[foreground_mask], one_dot_zero)
-    assert torch.allclose(point_light_rays_unit_norm[background_mask], zero_vector_float)     
-    
-    return point_light_rays, point_light_rays_unit
+    assert torch.allclose(point_light_rays_unit_norm[background_mask], zero_vector_float)
+
+    see_more("surface_normals_hit_unit", surface_normals_hit_unit, True)
+    see_more("point_light_rays", point_light_rays, True)
+
+    l_dot_n = torch.sum(torch.mul(surface_normals_hit_unit, point_light_rays_unit), dim=1)
+    assert l_dot_n.shape == (n_points_hit,)
+    see_more("l_dot_n", l_dot_n, True)
+
+    l_dot_n_clamped = torch.maximum(l_dot_n, zero_dot_zero)
+    assert l_dot_n_clamped.shape == (n_points_hit,)
+    see_more("l_dot_n_clamped", l_dot_n_clamped, True)
+
+    colors_d = torch.mul(torch.mul(l_dot_n_clamped, point_light_rgb_01.unsqueeze(1)).t(), one_dot_zero)
+    see_more("colors_d", colors_d, True)
+    assert colors_d.shape == (n_points_hit, 3)
+
+    colors_d_weighted_01 = torch.mul(colors_d, k_d)
+    see_more("colors_d_weighted_01", colors_d_weighted_01, True)
+    assert colors_d_weighted_01.shape == (n_points_hit, 3)
+
+    assert colors_d_weighted_01.shape == spheres_rgb_hit_01.shape
+    colors_d_mixed_01 = torch.mul(colors_d_weighted_01, spheres_rgb_hit_01)
+
+    colors_d_mixed = torch.mul(colors_d_mixed_01, two_55).to(torch.int)
+    assert colors_d_mixed.shape == spheres_rgb_hit_01.shape
+
+    return point_light_rays, point_light_rays_unit, colors_d_mixed_01, colors_d_mixed
 
 
 def compute_lighting_specular_component_1_point_light(points_hit, surface_normals_hit_unit, eye, spheres_rgb, point_light_position, point_light_rgb):
@@ -249,10 +266,18 @@ def compute_lighting_specular_component_1_point_light(points_hit, surface_normal
     k_s = 0.3
 
 
-point_light_rays, point_light_rays_unit = compute_lighting_diffuse_component_1_point_light(points_hit, foreground_mask, background_mask, surface_normals_hit_unit, eye, spheres_rgb, point_lights_position[0], point_lights_rgb[0])
-see_more("point_light_rays", point_light_rays, True)
+point_light_rays, point_light_rays_unit, colors_d_mixed_01, colors_d_mixed = compute_lighting_diffuse_component_1_point_light(points_hit, foreground_mask, background_mask, surface_normals_hit_unit, spheres_rgb, spheres_index_hit, point_lights_position[0], point_lights_rgb[0])
 
-point_light_rays_norm = torch.norm(point_light_rays[foreground_mask], p=2, dim=1, keepdim=True)
-see_more("point_light_rays_norm", point_light_rays_norm, True)
+print(f"colors_d_mixed_01[middle_pixel_index]={colors_d_mixed_01[middle_pixel_index]}")
 
-plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [12, 30], 'terrain')
+# plots
+
+plot_rgb_image(spheres_rgb_hit, background_mask, resx_int_py, resy_int_py)
+plot_rgb_image(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
+
+plot_all = False
+
+if plot_all:
+    plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], 'terrain')
+    plot_vectors_with_color_by_norm(surface_normals_hit, foreground_mask_with_0, [0, 12], 'terrain')
+    plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [12, 30], 'terrain')

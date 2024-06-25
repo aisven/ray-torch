@@ -1,5 +1,18 @@
+import matplotlib.pyplot as plt
 import pyvista as pv
 import torch
+
+from ray_torch.constant.constant import zero_vector_int
+
+
+def plot_rgb_image(img_rgb, background_mask, resx_int_py, resy_int_py):
+    img_rgb = img_rgb.clone()
+    img_rgb[background_mask] = zero_vector_int
+    img_rgb_view = img_rgb.view(resx_int_py, resy_int_py, 3)
+    img_rgb_view_permuted = img_rgb_view.permute(1, 0, 2)
+    assert img_rgb_view_permuted.shape == (resy_int_py, resx_int_py, 3)
+    plt.imshow(img_rgb_view_permuted)
+    plt.show()
 
 
 def plot_vectors_with_color_by_z_value(vectors, foreground_mask, clim, cmap, show_axes=True, show_grid=True):
