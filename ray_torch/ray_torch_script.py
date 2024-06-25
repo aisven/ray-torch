@@ -250,5 +250,9 @@ def compute_lighting_specular_component_1_point_light(points_hit, surface_normal
 
 
 point_light_rays, point_light_rays_unit = compute_lighting_diffuse_component_1_point_light(points_hit, foreground_mask, background_mask, surface_normals_hit_unit, eye, spheres_rgb, point_lights_position[0], point_lights_rgb[0])
+see_more("point_light_rays", point_light_rays, True)
 
-plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [0, 10], 'terrain')
+point_light_rays_norm = torch.norm(point_light_rays[foreground_mask], p=2, dim=1, keepdim=True)
+see_more("point_light_rays_norm", point_light_rays_norm, True)
+
+plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [12, 30], 'terrain')
