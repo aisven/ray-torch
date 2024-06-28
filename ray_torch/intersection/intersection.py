@@ -13,7 +13,9 @@ from ray_torch.utility.utility import see
 from ray_torch.utility.utility import see_more
 
 
-def intersect_rays_with_spheres(n_rays, n_spheres, ray_origin_per_sphere, spheres_center, spheres_radius, primary_ray_vectors_unit):
+def intersect_rays_with_spheres(
+    n_rays, n_spheres, ray_origin_per_sphere, spheres_center, spheres_radius, primary_ray_vectors_unit
+):
     # n_rays is the number of rays
 
     # n_spheres is the number of spheres
@@ -64,8 +66,10 @@ def intersect_rays_with_spheres(n_rays, n_spheres, ray_origin_per_sphere, sphere
     assert is_float_tensor_on_device(spheres_radius_sqaured)
     assert spheres_radius_sqaured.shape == (n_spheres,)
     # we compute all the dot products and all the scalar subtractions in one go
-    c = torch.sum(torch.mul(ray_origin_minus_spheres_center, ray_origin_minus_spheres_center),
-                  dim=1) - spheres_radius_sqaured
+    c = (
+        torch.sum(torch.mul(ray_origin_minus_spheres_center, ray_origin_minus_spheres_center), dim=1)
+        - spheres_radius_sqaured
+    )
     see("c", c)
     assert is_float_tensor_on_device(c)
     assert c.shape == (n_spheres,)
@@ -88,7 +92,7 @@ def intersect_rays_with_spheres(n_rays, n_spheres, ray_origin_per_sphere, sphere
     spheres_1_solution_indices = (discriminants > -1e-8) & (discriminants < 1e-8)
     see("spheres_1_solution_indices", spheres_1_solution_indices, False)
     assert spheres_1_solution_indices.shape == (n_rays, n_spheres)
-    spheres_0_solution_indices = (discriminants < 1e-8)
+    spheres_0_solution_indices = discriminants < 1e-8
     see("spheres_0_solution_indices", spheres_0_solution_indices, False)
     assert spheres_0_solution_indices.shape == (n_rays, n_spheres)
 
@@ -195,4 +199,13 @@ def intersect_rays_with_spheres(n_rays, n_spheres, ray_origin_per_sphere, sphere
     foreground_mask = ts_foreground_mask
     foreground_mask_with_0 = ts_foreground_mask_with_0
 
-    return points_hit, surface_normals_hit, surface_normals_hit_unit, spheres_index_hit, spheres_center_hit, background_mask, foreground_mask, foreground_mask_with_0
+    return (
+        points_hit,
+        surface_normals_hit,
+        surface_normals_hit_unit,
+        spheres_index_hit,
+        spheres_center_hit,
+        background_mask,
+        foreground_mask,
+        foreground_mask_with_0,
+    )

@@ -12,7 +12,17 @@ from ray_torch.utility.utility import is_float_tensor_on_device
 from ray_torch.utility.utility import see_more
 
 
-def compute_lighting_diffuse_component_1_point_light(l_dot_n, points_hit, foreground_mask, background_mask, surface_normals_hit_unit, spheres_rgb_01, spheres_index_hit, point_light_position, point_light_rgb_01):
+def compute_lighting_diffuse_component_1_point_light(
+    l_dot_n,
+    points_hit,
+    foreground_mask,
+    background_mask,
+    surface_normals_hit_unit,
+    spheres_rgb_01,
+    spheres_index_hit,
+    point_light_position,
+    point_light_rgb_01,
+):
     spheres_rgb_hit_01 = spheres_rgb_01[spheres_index_hit]
     # weighting factor for diffuse component
     k_d = create_tensor_on_device(0.6)
@@ -43,8 +53,20 @@ def compute_lighting_diffuse_component_1_point_light(l_dot_n, points_hit, foregr
     return colors_d_mixed_01, colors_d_mixed
 
 
-def compute_lighting_specular_component_1_point_light(l_dot_n, point_light_rays_unit, points_hit, foreground_mask, background_mask, surface_normals_hit_unit, spheres_rgb_01, spheres_index_hit, point_light_position, point_light_rgb_01, primary_ray_vectors_unit):
-    #spheres_rgb_hit_01 = spheres_rgb_01[spheres_index_hit]
+def compute_lighting_specular_component_1_point_light(
+    l_dot_n,
+    point_light_rays_unit,
+    points_hit,
+    foreground_mask,
+    background_mask,
+    surface_normals_hit_unit,
+    spheres_rgb_01,
+    spheres_index_hit,
+    point_light_position,
+    point_light_rgb_01,
+    primary_ray_vectors_unit,
+):
+    # spheres_rgb_hit_01 = spheres_rgb_01[spheres_index_hit]
     # weighting factor for specular component
     k_s = create_tensor_on_device(0.4)
     # number of intersections
@@ -75,7 +97,6 @@ def compute_lighting_specular_component_1_point_light(l_dot_n, point_light_rays_
     see_more("view_vectors", view_vectors, True)
 
     r_dot_v = torch.sum(torch.mul(reflection_vectors, view_vectors), dim=1)
-    #r_dot_v = torch.mul(torch.sum(torch.mul(reflection_vectors, view_vectors), dim=1), minus_one_dot_zero)
     assert is_float_tensor_on_device(r_dot_v)
     assert r_dot_v.shape == (n_points_hit,)
     r_dot_v[background_mask] = zero_dot_zero

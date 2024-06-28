@@ -73,14 +73,14 @@ assert is_float_tensor_on_device(distance_intrinsic)
 gaze_unit = tf.normalize(gaze, dim=0)
 see("gaze", gaze)
 see("gaze_unit", gaze_unit)
-assert torch.isclose(torch.norm(gaze_unit), torch.tensor(1., dtype=torch.float, requires_grad=False))
+assert torch.isclose(torch.norm(gaze_unit), torch.tensor(1.0, dtype=torch.float, requires_grad=False))
 assert is_float_tensor_on_device(gaze_unit)
 
 scrnx_unit = la.cross(up, gaze_unit, dim=0)
 scrnx_unit = tf.normalize(scrnx_unit, dim=0)
-assert torch.isclose(torch.norm(scrnx_unit), torch.tensor(1., dtype=torch.float, requires_grad=False))
+assert torch.isclose(torch.norm(scrnx_unit), torch.tensor(1.0, dtype=torch.float, requires_grad=False))
 # !? hack to get numerically perfect scrnx in special case
-scrnx_unit_perfect = create_tensor_on_device([1.,0.,0.])
+scrnx_unit_perfect = create_tensor_on_device([1.0, 0.0, 0.0])
 if torch.allclose(scrnx_unit, scrnx_unit_perfect):
     print("Using perfect scrnx_unit.")
     scrnx_unit = scrnx_unit_perfect
@@ -89,9 +89,9 @@ assert is_float_tensor_on_device(scrnx_unit)
 
 scrny_unit = la.cross(gaze_unit, scrnx_unit, dim=0)
 scrny_unit = tf.normalize(scrny_unit, dim=0)
-assert torch.isclose(torch.norm(scrny_unit), torch.tensor(1., dtype=torch.float, requires_grad=False))
+assert torch.isclose(torch.norm(scrny_unit), torch.tensor(1.0, dtype=torch.float, requires_grad=False))
 # !? hack to get numerically perfect scrny in special case
-scrny_unit_perfect = create_tensor_on_device([0.,1.,0.])
+scrny_unit_perfect = create_tensor_on_device([0.0, 1.0, 0.0])
 if torch.allclose(scrny_unit, scrny_unit_perfect):
     print("Using perfect scrny_unit.")
     scrny_unit = scrny_unit_perfect
@@ -103,7 +103,7 @@ assert is_float_tensor_on_device(scrny_unit)
 scrnz_unit = la.cross(scrnx_unit, scrny_unit, dim=0)
 scrnz_unit = tf.normalize(scrnz_unit, dim=0)
 # !? hack to get numerically perfect scrnz in special case
-scrnz_unit_perfect = create_tensor_on_device([0.,0.,1.])
+scrnz_unit_perfect = create_tensor_on_device([0.0, 0.0, 1.0])
 if torch.allclose(scrnz_unit, scrnz_unit_perfect):
     print("Using perfect scrnz_unit.")
     scrnz_unit = scrnz_unit_perfect
@@ -179,6 +179,7 @@ def compute_relative_position_of_pixel_upper_left(gaze, scrnx, resx, resx_off, s
     assert is_float_tensor_on_device(px_ul_pos)
     return px_ul_pos
 
+
 # we also compute these relative positions of some other pixels just for sanity checks
 
 
@@ -215,16 +216,24 @@ resy_off = create_tensor_on_device(0.5)
 assert is_float_tensor_on_device(resx_off)
 assert is_float_tensor_on_device(resy_off)
 
-px_ul = compute_relative_position_of_pixel_upper_left(gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero)
+px_ul = compute_relative_position_of_pixel_upper_left(
+    gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero
+)
 see("px_ul", px_ul)
 
-px_ll = compute_relative_position_of_pixel_lower_left(gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero)
+px_ll = compute_relative_position_of_pixel_lower_left(
+    gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero
+)
 see("px_ll", px_ll)
 
-px_ur = compute_relative_position_of_pixel_upper_right(gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero)
+px_ur = compute_relative_position_of_pixel_upper_right(
+    gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero
+)
 see("px_ur", px_ur)
 
-px_lr = compute_relative_position_of_pixel_lower_right(gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero)
+px_lr = compute_relative_position_of_pixel_lower_right(
+    gaze, scrnx_scaled, resx, resx_off, scrny_scaled, resy, resy_off, two_dot_zero
+)
 see("px_lr", px_lr)
 
 distance_px_ul_px_ur = torch.norm(px_ul - px_ur)
@@ -277,13 +286,19 @@ if fovy_degrees.item() == 33.83:
 # and with the center of the image plane is the origin
 
 img_grid_original_firstx = minus_one_dot_zero * ((resx / two_dot_zero) - resx_off)
-img_grid_original_lastx = ((resx / two_dot_zero) - resx_off + one_dot_zero)
-img_grid_original_firsty =((resy / two_dot_zero) - resy_off)
+img_grid_original_lastx = (resx / two_dot_zero) - resx_off + one_dot_zero
+img_grid_original_firsty = (resy / two_dot_zero) - resy_off
 img_grid_original_lasty = minus_one_dot_zero * ((resy / two_dot_zero) - resy_off + one_dot_zero)
 
-img_grid_original = torch.cartesian_prod(torch.arange(start=img_grid_original_firstx, end=img_grid_original_lastx, step=1.0, dtype=torch.float, requires_grad=False),
-                                         torch.arange(start=img_grid_original_firsty, end=img_grid_original_lasty, step=-1.0, dtype=torch.float, requires_grad=False),
-                                         torch.tensor([0.0], dtype=torch.float, requires_grad=False))
+img_grid_original = torch.cartesian_prod(
+    torch.arange(
+        start=img_grid_original_firstx, end=img_grid_original_lastx, step=1.0, dtype=torch.float, requires_grad=False
+    ),
+    torch.arange(
+        start=img_grid_original_firsty, end=img_grid_original_lasty, step=-1.0, dtype=torch.float, requires_grad=False
+    ),
+    torch.tensor([0.0], dtype=torch.float, requires_grad=False),
+)
 see("img_grid_original", img_grid_original)
 img_grid_original = img_grid_original.to(device)
 assert is_float_tensor_on_device(img_grid_original)
@@ -318,7 +333,7 @@ scrnz_unit_neg = normalize_vector(minus_one_dot_zero * scrnz_unit)
 assert is_float_tensor_on_device(scrnz_unit_neg)
 
 img_grid_rotation_matrix = torch.stack([scrnx_unit, scrny_unit, scrnz_unit_neg], dim=1)
-#img_grid_rotation_matrix = torch.stack([scrnx_unit, scrny_unit, scrnz_unit], dim=1)
+# img_grid_rotation_matrix = torch.stack([scrnx_unit, scrny_unit, scrnz_unit], dim=1)
 assert is_float_tensor_on_device(img_grid_rotation_matrix)
 see("img_grid_rotation_matrix", img_grid_rotation_matrix, False)
 
@@ -344,7 +359,9 @@ assert torch.isclose(distance_px_ul_px_lr, distance_px_ul_px_lr_after_rotation)
 img_grid_translated_by_look = img_grid_rotated + look
 see("img_grid_translated_by_look", img_grid_translated_by_look, False)
 
-distance_px_ul_px_lr_after_translation_by_look = torch.norm(img_grid_translated_by_look[n_pixels - 1] - img_grid_translated_by_look[0])
+distance_px_ul_px_lr_after_translation_by_look = torch.norm(
+    img_grid_translated_by_look[n_pixels - 1] - img_grid_translated_by_look[0]
+)
 see("distance_px_ul_px_lr_after_translation_by_look", distance_px_ul_px_lr_after_translation_by_look, False)
 
 assert torch.isclose(distance_px_ul_px_lr_after_scaling, distance_px_ul_px_lr_after_translation_by_look)
@@ -356,8 +373,14 @@ assert torch.isclose(distance_px_ul_px_lr, distance_px_ul_px_lr_after_translatio
 img_grid_translated_by_eye_and_gaze = img_grid_rotated + eye + gaze
 see("img_grid_translated_by_eye_and_gaze", img_grid_translated_by_eye_and_gaze, False)
 
-distance_px_ul_px_lr_after_translation_by_eye_and_gaze = torch.norm(img_grid_translated_by_eye_and_gaze[n_pixels - 1] - img_grid_translated_by_eye_and_gaze[0])
-see("distance_px_ul_px_lr_after_translation_by_eye_and_gaze", distance_px_ul_px_lr_after_translation_by_eye_and_gaze, False)
+distance_px_ul_px_lr_after_translation_by_eye_and_gaze = torch.norm(
+    img_grid_translated_by_eye_and_gaze[n_pixels - 1] - img_grid_translated_by_eye_and_gaze[0]
+)
+see(
+    "distance_px_ul_px_lr_after_translation_by_eye_and_gaze",
+    distance_px_ul_px_lr_after_translation_by_eye_and_gaze,
+    False,
+)
 
 assert torch.isclose(distance_px_ul_px_lr_after_scaling, distance_px_ul_px_lr_after_translation_by_eye_and_gaze)
 assert torch.isclose(distance_px_ul_px_lr_after_scaling, distance_px_ul_px_lr_after_translation_by_eye_and_gaze)

@@ -39,11 +39,12 @@ torch.set_grad_enabled(False)
 # check for Metal Performance Shaders in case of macOS just out of curiosity
 if not torch.backends.mps.is_available():
     if not torch.backends.mps.is_built():
-        print("MPS not available because the current PyTorch install was not "
-              "built with MPS enabled.")
+        print("MPS not available because the current PyTorch install was not " "built with MPS enabled.")
     else:
-        print("MPS not available because the current MacOS version is not 12.3+ "
-              "and/or you do not have an MPS-enabled device on this machine.")
+        print(
+            "MPS not available because the current MacOS version is not 12.3+ "
+            "and/or you do not have an MPS-enabled device on this machine."
+        )
 
 
 # define point light(s)
@@ -188,7 +189,18 @@ assert is_float_tensor_on_device(eyes_pixels)
 assert eyes_pixels.shape == (n_pixels, 3)
 see("eyes_pixels", eyes_pixels, False)
 
-points_hit, surface_normals_hit, surface_normals_hit_unit, spheres_index_hit, spheres_center_hit, background_mask, foreground_mask, foreground_mask_with_0 = intersect_rays_with_spheres(n_pixels, n_spheres, eyes_spheres_center, spheres_center, spheres_radius, primary_ray_vectors_unit)
+(
+    points_hit,
+    surface_normals_hit,
+    surface_normals_hit_unit,
+    spheres_index_hit,
+    spheres_center_hit,
+    background_mask,
+    foreground_mask,
+    foreground_mask_with_0,
+) = intersect_rays_with_spheres(
+    n_pixels, n_spheres, eyes_spheres_center, spheres_center, spheres_radius, primary_ray_vectors_unit
+)
 
 print(f"spheres_index_hit[middle_pixel_index]={spheres_index_hit[middle_pixel_index]}")
 
@@ -205,13 +217,37 @@ see("spheres_rgb_hit", spheres_rgb_hit)
 assert spheres_rgb_hit.shape == (n_pixels, 3)
 
 
-l_dot_n, point_light_rays, point_light_rays_unit = compute_l_dot_n(points_hit, foreground_mask, background_mask, surface_normals_hit_unit, point_lights_position)
+l_dot_n, point_light_rays, point_light_rays_unit = compute_l_dot_n(
+    points_hit, foreground_mask, background_mask, surface_normals_hit_unit, point_lights_position
+)
 
-colors_d_mixed_01, colors_d_mixed = compute_lighting_diffuse_component_1_point_light(l_dot_n, points_hit, foreground_mask, background_mask, surface_normals_hit_unit, spheres_rgb_01, spheres_index_hit, point_lights_position[0], point_lights_rgb_01[0])
+colors_d_mixed_01, colors_d_mixed = compute_lighting_diffuse_component_1_point_light(
+    l_dot_n,
+    points_hit,
+    foreground_mask,
+    background_mask,
+    surface_normals_hit_unit,
+    spheres_rgb_01,
+    spheres_index_hit,
+    point_lights_position[0],
+    point_lights_rgb_01[0],
+)
 
 print(f"colors_d_mixed_01[middle_pixel_index]={colors_d_mixed_01[middle_pixel_index]}")
 
-colors_s_mixed_01, colors_s_mixed = compute_lighting_specular_component_1_point_light(l_dot_n, point_light_rays_unit, points_hit, foreground_mask, background_mask, surface_normals_hit_unit, spheres_rgb_01, spheres_index_hit, point_lights_position[0], point_lights_rgb_01[0], primary_ray_vectors_unit)
+colors_s_mixed_01, colors_s_mixed = compute_lighting_specular_component_1_point_light(
+    l_dot_n,
+    point_light_rays_unit,
+    points_hit,
+    foreground_mask,
+    background_mask,
+    surface_normals_hit_unit,
+    spheres_rgb_01,
+    spheres_index_hit,
+    point_lights_position[0],
+    point_lights_rgb_01[0],
+    primary_ray_vectors_unit,
+)
 
 # plots
 
@@ -222,6 +258,6 @@ plot_rgb_image_with_actual_size(colors_s_mixed, background_mask, resx_int_py, re
 plot_all = False
 
 if plot_all:
-    plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], 'terrain')
-    plot_vectors_with_color_by_norm(surface_normals_hit, foreground_mask_with_0, [0, 12], 'terrain')
-    plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [12, 30], 'terrain')
+    plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], "terrain")
+    plot_vectors_with_color_by_norm(surface_normals_hit, foreground_mask_with_0, [0, 12], "terrain")
+    plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [12, 30], "terrain")
