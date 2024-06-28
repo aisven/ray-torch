@@ -11,7 +11,7 @@ log_level_info = True
 if torch.cuda.is_available():
     device_str = "cuda"
     device = torch.device(device_str)
-    print(f"CUDA is available. Using first GPU.")
+    print("CUDA is available. Using first GPU.")
 else:
     device_str = "cpu"
     device = torch.device("cpu")
