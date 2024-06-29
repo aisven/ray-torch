@@ -14,6 +14,7 @@ from ray_torch.camera.camera import resy
 from ray_torch.camera.camera import resy_int_py
 from ray_torch.constant.constant import one_dot_zero
 from ray_torch.constant.constant import one_over_255
+from ray_torch.constant.constant import two_55
 from ray_torch.intersection.intersection import intersect_rays_with_spheres
 from ray_torch.lighting.lighting import compute_l_dot_n
 from ray_torch.lighting.lighting import compute_lighting_diffuse_component_1_point_light
@@ -24,7 +25,7 @@ from ray_torch.plot.plot import plot_vectors_with_color_by_z_value
 from ray_torch.utility.utility import device
 from ray_torch.utility.utility import is_float_tensor_on_device
 from ray_torch.utility.utility import see
-
+from ray_torch.utility.utility import see_more
 
 # global PyTorch settings
 
@@ -234,8 +235,9 @@ colors_d_mixed_01, colors_d_mixed = compute_lighting_diffuse_component_1_point_l
 )
 
 print(f"colors_d_mixed_01[middle_pixel_index]={colors_d_mixed_01[middle_pixel_index]}")
+print(f"colors_d_mixed[middle_pixel_index]={colors_d_mixed[middle_pixel_index]}")
 
-colors_s_mixed_01, colors_s_mixed = compute_lighting_specular_component_1_point_light(
+colors_s_weighted_01, colors_s_weighted = compute_lighting_specular_component_1_point_light(
     l_dot_n,
     point_light_rays_unit,
     points_hit,
@@ -249,11 +251,20 @@ colors_s_mixed_01, colors_s_mixed = compute_lighting_specular_component_1_point_
     primary_ray_vectors_unit,
 )
 
-# plots
+print(f"colors_s_weighted_01[middle_pixel_index]={colors_s_weighted_01[middle_pixel_index]}")
+print(f"colors_s_weighted[middle_pixel_index]={colors_s_weighted[middle_pixel_index]}")
+
+colors_d_and_s_01 = colors_d_mixed_01 + colors_s_weighted_01
+colors_d_and_s = torch.mul(colors_d_and_s_01, two_55).to(torch.int)
+see_more("colors_d_and_s", colors_d_and_s, True)
+
+print(f"colors_d_and_s_01[middle_pixel_index]={colors_d_and_s_01[middle_pixel_index]}")
+print(f"colors_d_and_s[middle_pixel_index]={colors_d_and_s[middle_pixel_index]}")
 
 plot_rgb_image_with_actual_size(spheres_rgb_hit, background_mask, resx_int_py, resy_int_py)
 plot_rgb_image_with_actual_size(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
-plot_rgb_image_with_actual_size(colors_s_mixed, background_mask, resx_int_py, resy_int_py)
+plot_rgb_image_with_actual_size(colors_s_weighted, background_mask, resx_int_py, resy_int_py)
+plot_rgb_image_with_actual_size(colors_d_and_s, background_mask, resx_int_py, resy_int_py)
 
 plot_all = False
 
