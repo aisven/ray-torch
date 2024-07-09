@@ -18,25 +18,33 @@ from ray_torch.utility.utility import see
 def sample_pixel_offsets_uniformly_randomly(magx, magy, resx_int_py, resy_int_py, n_pixels):
     n_pixels_anticipated = resx_int_py * resy_int_py
     assert n_pixels == n_pixels_anticipated
-    max_value_x = (magx / 2.0)
+    max_value_x = magx / 2.0
     min_value_x = max_value_x * -1.0
-    max_value_y = (magy / 2.0)
+    max_value_y = magy / 2.0
     min_value_y = max_value_y * -1.0
     uniform_dist_x = torch.distributions.Uniform(min_value_x, max_value_x)
     uniform_dist_y = torch.distributions.Uniform(min_value_y, max_value_y)
     shape_value = torch.Size((n_pixels, 1))
 
-    offsets_x_only = uniform_dist_x.sample(shape_value)
-    offsets_y_only = uniform_dist_y.sample(shape_value)
+    offsets_x_only = uniform_dist_x.sample(shape_value).requires_grad_(False).to(device)
+    offsets_y_only = uniform_dist_y.sample(shape_value).requires_grad_(False).to(device)
 
-    zeros_tensor_yz = torch.zeros(n_pixels, 2)
+    zeros_tensor_yz = torch.zeros(n_pixels, 2, requires_grad=False, device=device)
     offsets_x = torch.cat((offsets_x_only, zeros_tensor_yz), dim=1)
 
-    zeros_tensor_x = torch.zeros(n_pixels, 1)
-    zeros_tensor_z = torch.zeros(n_pixels, 1)
+    zeros_tensor_x = torch.zeros(n_pixels, 1, requires_grad=False, device=device)
+    zeros_tensor_z = torch.zeros(n_pixels, 1, requires_grad=False, device=device)
     offsets_y = torch.cat((zeros_tensor_x, offsets_y_only, zeros_tensor_z), dim=1)
 
     return offsets_x, offsets_y
+
+
+def sample_image_grid_scaled(magx, magy, resx_int_py, resy_int_py, n_pixels, img_grid_scaled):
+    # now sample additional primary rays
+    offsets_x, offsets_y = sample_pixel_offsets_uniformly_randomly(magx, magy, resx_int_py, resy_int_py, n_pixels)
+    img_grid_scaled_sampled = torch.add(torch.add(img_grid_scaled, offsets_x), offsets_y)
+    assert img_grid_scaled_sampled.shape == (n_pixels, 3)
+    return img_grid_scaled_sampled
 
 
 near = create_tensor_on_device(0.1)
@@ -357,11 +365,9 @@ assert is_float_tensor_on_device(img_grid_scaling_matrix)
 img_grid_scaled = torch.matmul(img_grid_original, img_grid_scaling_matrix)
 see("img_grid_scaled", img_grid_scaled, False)
 assert is_float_tensor_on_device(img_grid_scaled)
-
-
-def shift_img_grid_scaled(shift_amount_x, shift_amount_y):
-    return None
-
+# also get an additional image grid where each pixel point is randomly offset but still within the pixel area
+img_grid_scaled_sampled = sample_image_grid_scaled(magx, magy, resx_int_py, resy_int_py, n_pixels, img_grid_scaled)
+assert is_float_tensor_on_device(img_grid_scaled_sampled)
 
 distance_px_ul_px_lr = torch.norm(px_ul - px_lr)
 see("distance_px_ul_px_lr", distance_px_ul_px_lr, False)
@@ -390,6 +396,8 @@ see("img_grid_rotated_px_lr", img_grid_rotated_px_lr, False)
 
 img_grid_rotated = torch.matmul(img_grid_scaled, img_grid_rotation_matrix)
 see("img_grid_rotated", img_grid_rotated, False)
+img_grid_rotated_sampled = torch.matmul(img_grid_scaled_sampled, img_grid_rotation_matrix)
+see("img_grid_rotated_sampled", img_grid_rotated_sampled, False)
 
 distance_px_ul_px_lr_after_rotation = torch.norm(img_grid_rotated[n_pixels - 1] - img_grid_rotated[0])
 see("distance_px_ul_px_lr_after_rotation", distance_px_ul_px_lr_after_rotation, False)
@@ -403,6 +411,8 @@ assert torch.isclose(distance_px_ul_px_lr, distance_px_ul_px_lr_after_rotation)
 
 img_grid_translated_by_look = img_grid_rotated + look
 see("img_grid_translated_by_look", img_grid_translated_by_look, False)
+img_grid_translated_by_look_sampled = img_grid_rotated + look
+see("img_grid_translated_by_look_sampled", img_grid_translated_by_look_sampled, False)
 
 distance_px_ul_px_lr_after_translation_by_look = torch.norm(
     img_grid_translated_by_look[n_pixels - 1] - img_grid_translated_by_look[0]
@@ -417,6 +427,8 @@ assert torch.isclose(distance_px_ul_px_lr, distance_px_ul_px_lr_after_translatio
 
 img_grid_translated_by_eye_and_gaze = img_grid_rotated + eye + gaze
 see("img_grid_translated_by_eye_and_gaze", img_grid_translated_by_eye_and_gaze, False)
+img_grid_translated_by_eye_and_gaze_sampled = img_grid_rotated + eye + gaze
+see("img_grid_translated_by_eye_and_gaze_sampled", img_grid_translated_by_eye_and_gaze_sampled, False)
 
 distance_px_ul_px_lr_after_translation_by_eye_and_gaze = torch.norm(
     img_grid_translated_by_eye_and_gaze[n_pixels - 1] - img_grid_translated_by_eye_and_gaze[0]
@@ -438,12 +450,9 @@ assert torch.allclose(img_grid_translated_by_look, img_grid_translated_by_eye_an
 img_grid = img_grid_translated_by_look
 assert is_float_tensor_on_device(img_grid)
 see("img_grid", img_grid)
-
-# compute a direction vector per primary ray
-
-# since we have the image grid
-# this is now just one parallelized operation
-
+img_grid_sampled = img_grid_translated_by_eye_and_gaze_sampled
+assert is_float_tensor_on_device(img_grid_sampled)
+see("img_grid_sampled", img_grid_sampled)
 
 if log_level_debug:
     print(f"eye={eye}")
