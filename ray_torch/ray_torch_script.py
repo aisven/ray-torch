@@ -235,19 +235,24 @@ print(f"colors_d_and_s[middle_pixel_index]={colors_d_and_s[middle_pixel_index]}"
 
 # ----- show images and plots -----
 
-
+# plot pure pixel to sphere assignment
 plot_rgb_image_with_actual_size(spheres_rgb_hit, background_mask, resx_int_py, resy_int_py)
+# plot diffuse contributions
 plot_rgb_image_with_actual_size(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
+# plot specular contributions
 plot_rgb_image_with_actual_size(colors_s_weighted, background_mask, resx_int_py, resy_int_py)
+# plot final result
 plot_rgb_image_with_actual_size(colors_d_and_s, background_mask, resx_int_py, resy_int_py)
 
-plot_all = True
+# plot points of intersection colored by their z-value
+plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], "terrain")
 
-if plot_all:
-    plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], "terrain")
-    plot_vectors_with_color_by_norm(
-        surface_normals_hit, foreground_mask_with_0, [0, 12], "terrain", show_grid=False, show_axes=False
-    )
-    plot_vectors_with_color_by_norm(
-        point_light_rays, foreground_mask_with_0, [12, 30], "terrain", show_grid=False, show_axes=False
-    )
+# sanity check surface normals via plotting
+# plot_vectors_with_color_by_norm(
+#     surface_normals_hit, foreground_mask_with_0, [0, 12], "terrain", show_grid=False, show_axes=False
+# )
+
+# plot vectors from point light source to intersections colored by their L2 norm
+plot_vectors_with_color_by_norm(
+    point_light_rays, foreground_mask_with_0, [12, 30], "terrain", show_grid=False, show_axes=False
+)
