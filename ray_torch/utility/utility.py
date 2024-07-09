@@ -25,7 +25,7 @@ def create_tensor(v):
 
 
 def create_tensor_on_device(v):
-    return torch.tensor(v, dtype=torch.float, requires_grad=False).to(device)
+    return torch.tensor(v, dtype=torch.float, requires_grad=False, device=device)
 
 
 def is_float_tensor(obj):
@@ -37,8 +37,22 @@ def is_float_tensor_on_device(obj):
     return is_float_tensor(obj) and (device_str == obj.device.type)
 
 
+def is_int_tensor(obj):
+    return isinstance(obj, torch.IntTensor) or isinstance(obj, torch.cuda.LongTensor)
+
+
+def is_int_tensor_on_device(obj):
+    # obj.device.type is a str
+    return is_int_tensor(obj) and (device_str == obj.device.type)
+
+
 def is_long_tensor(obj):
     return isinstance(obj, torch.LongTensor) or isinstance(obj, torch.cuda.LongTensor)
+
+
+def is_long_tensor_on_device(obj):
+    # obj.device.type is a str
+    return is_long_tensor(obj) and (device_str == obj.device.type)
 
 
 def normalize_vector_custom(v):

@@ -24,6 +24,7 @@ from ray_torch.plot.plot import plot_vectors_with_color_by_norm
 from ray_torch.plot.plot import plot_vectors_with_color_by_z_value
 from ray_torch.utility.utility import device
 from ray_torch.utility.utility import is_float_tensor_on_device
+from ray_torch.utility.utility import is_int_tensor_on_device
 from ray_torch.utility.utility import see
 from ray_torch.utility.utility import see_more
 
@@ -52,11 +53,11 @@ if not torch.backends.mps.is_available():
 
 
 def create_point_lights_1():
-    point_lights_position_py = [[-10.0, 10.0, 0.0]]
-    point_lights_position_pt = torch.tensor(point_lights_position_py, dtype=torch.float, requires_grad=False)
+    point_lights_position_py = [[-10.0, 8.0, -2.0]]
+    point_lights_position_pt = torch.tensor(point_lights_position_py, dtype=torch.float, requires_grad=False, device=device)
     n_point_lights = point_lights_position_pt.shape[0]
     point_lights_rgb_py = [[220, 190, 120]]
-    point_lights_rgb_pt = torch.tensor(point_lights_rgb_py, dtype=torch.int, requires_grad=False)
+    point_lights_rgb_pt = torch.tensor(point_lights_rgb_py, dtype=torch.int, requires_grad=False, device=device)
     assert point_lights_position_pt.shape == (n_point_lights, 3)
     assert point_lights_rgb_pt.shape == (n_point_lights, 3)
     point_lights_rgb_01_pt = torch.mul(point_lights_rgb_pt, one_over_255)
@@ -64,14 +65,10 @@ def create_point_lights_1():
 
 
 n_point_lights, point_lights_position, point_lights_rgb, point_lights_rgb_01 = create_point_lights_1()
-point_lights_position = point_lights_position.to(device)
-point_lights_rgb = point_lights_rgb.to(device)
-point_lights_rgb_01 = point_lights_rgb_01.to(device)
 
-see("point_lights_position", point_lights_position)
 assert is_float_tensor_on_device(point_lights_position)
-
-see("point_lights_rgb", point_lights_rgb)
+assert is_int_tensor_on_device(point_lights_rgb)
+assert is_float_tensor_on_device(point_lights_rgb_01)
 
 
 # define spheres
@@ -79,13 +76,13 @@ see("point_lights_rgb", point_lights_rgb)
 
 
 def create_spheres_1():
-    spheres_center_py = [[-1.0, 0.0, 8.0], [2.0, -2.0, 12.0], [0.0, 0.0, 20.0], [-8.0, 0.0, 10.0]]
-    spheres_center_pt = torch.tensor(spheres_center_py, dtype=torch.float, requires_grad=False)
+    spheres_center_py = [[-1.0, 0.0, 8.0], [2.0, -2.0, 12.0], [0.0, 0.0, 16.0], [-5.0, 0.0, 10.0], [2.2, -2.2, 6.7]]
+    spheres_center_pt = torch.tensor(spheres_center_py, dtype=torch.float, requires_grad=False, device=device)
     n_spheres = spheres_center_pt.shape[0]
-    spheres_radius_py = [1.0, 5.0, 10.0, 2.0]
-    spheres_radius_pt = torch.tensor(spheres_radius_py, dtype=torch.float, requires_grad=False)
-    spheres_rgb_py = [[150, 90, 200], [255, 144, 0], [255, 255, 255], [255, 0, 0]]
-    spheres_rgb_pt = torch.tensor(spheres_rgb_py, dtype=torch.int, requires_grad=False)
+    spheres_radius_py = [1.0, 4.0, 6.0, 1.0, 1.0]
+    spheres_radius_pt = torch.tensor(spheres_radius_py, dtype=torch.float, requires_grad=False, device=device)
+    spheres_rgb_py = [[150, 90, 200], [255, 144, 0], [200, 155, 255], [255, 0, 0], [123, 132, 231]]
+    spheres_rgb_pt = torch.tensor(spheres_rgb_py, dtype=torch.int, requires_grad=False, device=device)
     assert spheres_center_pt.shape == (n_spheres, 3)
     assert spheres_radius_pt.shape == (n_spheres,)
     assert spheres_rgb_pt.shape == (n_spheres, 3)
@@ -94,11 +91,11 @@ def create_spheres_1():
 
 
 n_spheres, spheres_center, spheres_radius, spheres_rgb, spheres_rgb_01 = create_spheres_1()
-spheres_center = spheres_center.to(device)
-spheres_radius = spheres_radius.to(device)
-spheres_rgb = spheres_rgb.to(device)
-spheres_rgb_01 = spheres_rgb_01.to(device)
 
+assert is_float_tensor_on_device(spheres_center)
+assert is_float_tensor_on_device(spheres_radius)
+assert is_int_tensor_on_device(spheres_rgb)
+assert is_float_tensor_on_device(spheres_rgb_01)
 
 see("spheres_center", spheres_center)
 assert is_float_tensor_on_device(spheres_center)
