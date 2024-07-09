@@ -2,13 +2,14 @@ import torch
 import torch.nn.functional as tf
 import torch.linalg as la
 
+from ray_torch.constant.constant import device
+from ray_torch.constant.constant import identity_matrix_3_by_3
+from ray_torch.constant.constant import log_level_debug
 from ray_torch.constant.constant import minus_one_dot_zero
 from ray_torch.constant.constant import one_dot_zero
 from ray_torch.constant.constant import two_dot_zero
 from ray_torch.utility.utility import create_tensor_on_device
-from ray_torch.utility.utility import device
 from ray_torch.utility.utility import is_float_tensor_on_device
-from ray_torch.utility.utility import log_level_debug
 from ray_torch.utility.utility import normalize_vector
 from ray_torch.utility.utility import normalize_vector_custom
 from ray_torch.utility.utility import see
@@ -279,36 +280,51 @@ if fovy_degrees.item() == 33.83:
 
 # compute the grid of vectors that form the image plane
 
-# each pixel will be represented by a vector pointing to its middle
 
-# create a vector per pixel on the image plane
-# with each pixel 1.0 wide and 1.0 high
-# and with the center of the image plane is the origin
+def create_img_grid_original(resx_off, resy_off):
+    # create a vector per pixel on the image plane
+    # with each pixel 1.0 wide and 1.0 high
+    # and with the center of the image plane is the origin
 
-img_grid_original_firstx = minus_one_dot_zero * ((resx / two_dot_zero) - resx_off)
-img_grid_original_lastx = (resx / two_dot_zero) - resx_off + one_dot_zero
-img_grid_original_firsty = (resy / two_dot_zero) - resy_off
-img_grid_original_lasty = minus_one_dot_zero * ((resy / two_dot_zero) - resy_off + one_dot_zero)
+    img_grid_original_firstx = minus_one_dot_zero * ((resx / two_dot_zero) - resx_off)
+    img_grid_original_lastx = (resx / two_dot_zero) - resx_off + one_dot_zero
+    img_grid_original_firsty = (resy / two_dot_zero) - resy_off
+    img_grid_original_lasty = minus_one_dot_zero * ((resy / two_dot_zero) - resy_off + one_dot_zero)
 
-img_grid_original = torch.cartesian_prod(
-    torch.arange(
-        start=img_grid_original_firstx, end=img_grid_original_lastx, step=1.0, dtype=torch.float, requires_grad=False, device=device
-    ),
-    torch.arange(
-        start=img_grid_original_firsty, end=img_grid_original_lasty, step=-1.0, dtype=torch.float, requires_grad=False, device=device
-    ),
-    torch.tensor([0.0], dtype=torch.float, requires_grad=False, device=device),
-)
-see("img_grid_original", img_grid_original)
-assert is_float_tensor_on_device(img_grid_original)
+    img_grid_original = torch.cartesian_prod(
+        torch.arange(
+            start=img_grid_original_firstx,
+            end=img_grid_original_lastx,
+            step=1.0,
+            dtype=torch.float,
+            requires_grad=False,
+            device=device,
+        ),
+        torch.arange(
+            start=img_grid_original_firsty,
+            end=img_grid_original_lasty,
+            step=-1.0,
+            dtype=torch.float,
+            requires_grad=False,
+            device=device,
+        ),
+        torch.tensor([0.0], dtype=torch.float, requires_grad=False, device=device),
+    )
+    see("img_grid_original", img_grid_original)
+    assert is_float_tensor_on_device(img_grid_original)
 
-n_pixels_anticipated = img_grid_original.shape[0]
-assert isinstance(n_pixels_anticipated, int)
-assert n_pixels == n_pixels_anticipated
+    n_pixels_anticipated = img_grid_original.shape[0]
+    assert isinstance(n_pixels_anticipated, int)
+    assert n_pixels == n_pixels_anticipated
+    return img_grid_original
+
+
+img_grid_original = create_img_grid_original(resx_off, resy_off)
+
 
 # scale the image plane using the width of a pixel and the height of a pixel
 
-identity_matrix_3_by_3 = torch.eye(3, dtype=torch.float, requires_grad=False, device=device)
+
 img_grid_scaling_matrix = identity_matrix_3_by_3 * create_tensor_on_device([magx, magy, 0.0])
 see("img_grid_scaling_matrix", img_grid_scaling_matrix, False)
 assert is_float_tensor_on_device(img_grid_scaling_matrix)
@@ -316,6 +332,11 @@ assert is_float_tensor_on_device(img_grid_scaling_matrix)
 img_grid_scaled = torch.matmul(img_grid_original, img_grid_scaling_matrix)
 see("img_grid_scaled", img_grid_scaled, False)
 assert is_float_tensor_on_device(img_grid_scaled)
+
+
+def shift_img_grid_scaled(shift_amount_x, shift_amount_y):
+    return None
+
 
 distance_px_ul_px_lr = torch.norm(px_ul - px_lr)
 see("distance_px_ul_px_lr", distance_px_ul_px_lr, False)
@@ -424,11 +445,6 @@ if log_level_debug:
     print(f"gaze_unit dot up={torch.dot(gaze_unit, up)}")
 
     print(f"gaze dot up={torch.dot(gaze, up)}")
-
-    # print(f" dot ={torch.dot(torch.tensor([1.0, -1.0, -1.0], dtype=float, requires_grad=False), torch.tensor([1.0, 1.0, -1.0], dtype=float, requires_grad=False))}")
-    # print(f" dot ={torch.dot(torch.tensor([1.0, -1.0, 1.0], dtype=float, requires_grad=False), torch.tensor([1.0, 1.0, 1.0], dtype=float, requires_grad=False))}")
-    # print(f" dot ={torch.dot(torch.tensor([1.0, -1.0, 0.0], dtype=float, requires_grad=False), torch.tensor([1.0, 1.0, 0.0], dtype=float, requires_grad=False))}")
-    # print(f" dot ={torch.dot(torch.tensor([1.0, -1.0, -1.0], dtype=float, requires_grad=False), torch.tensor([1.0, 1.0, 0.0], dtype=float, requires_grad=False))}")
 
     print(f"img_grid=\n{img_grid}")
     print(f"eye={eye}")

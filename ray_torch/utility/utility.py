@@ -1,23 +1,10 @@
 import torch
 import torch.nn.functional as tf
 
-
-# set log levels
-log_level_debug = False
-log_level_info = True
-
-
-# check if CUDA is available
-if torch.cuda.is_available():
-    device_str = "cuda"
-    device = torch.device(device_str)
-    print("CUDA is available. Using first GPU.")
-else:
-    device_str = "cpu"
-    device = torch.device("cpu")
-    print("CUDA is not available. Using CPU.")
-
-print(f"device={device}")
+from ray_torch.constant.constant import device
+from ray_torch.constant.constant import device_str
+from ray_torch.constant.constant import log_level_debug
+from ray_torch.constant.constant import log_level_info
 
 
 def create_tensor(v):

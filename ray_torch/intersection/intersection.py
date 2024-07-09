@@ -42,7 +42,7 @@ def intersect_rays_with_spheres(
     # A = x_D^2 + y_D^2 + z_D^2 = dot(D, D)
     # which is just the dot product of D with itself
     # which is 1.0 since the ray direction vectors are unit vectors
-    a = one_dot_zero
+    # a = one_dot_zero
 
     # compute the coefficient b of the quadratic equation
     # B = 2 * (x_D(x_E - x_S) + y_D(y_E - y_S) + z_D(z_E - z_S)) = 2 * dot(D, E - S)

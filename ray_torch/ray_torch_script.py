@@ -13,16 +13,16 @@ from ray_torch.camera.camera import resx_int_py
 from ray_torch.camera.camera import resy
 from ray_torch.camera.camera import resy_int_py
 from ray_torch.constant.constant import one_dot_zero
-from ray_torch.constant.constant import one_over_255
 from ray_torch.constant.constant import two_55
 from ray_torch.intersection.intersection import intersect_rays_with_spheres
+from ray_torch.light.light import create_point_lights_1
 from ray_torch.lighting.lighting import compute_l_dot_n
 from ray_torch.lighting.lighting import compute_lighting_diffuse_component_1_point_light
 from ray_torch.lighting.lighting import compute_lighting_specular_component_1_point_light
 from ray_torch.plot.plot import plot_rgb_image_with_actual_size
 from ray_torch.plot.plot import plot_vectors_with_color_by_norm
 from ray_torch.plot.plot import plot_vectors_with_color_by_z_value
-from ray_torch.utility.utility import device
+from ray_torch.sphere.sphere import create_spheres_1
 from ray_torch.utility.utility import is_float_tensor_on_device
 from ray_torch.utility.utility import is_int_tensor_on_device
 from ray_torch.utility.utility import see
@@ -38,72 +38,18 @@ torch.set_grad_enabled(False)
 # render on client-side instead of Jupyter server
 # pv.set_jupyter_backend('client')
 
-# check for Metal Performance Shaders in case of macOS just out of curiosity
-if not torch.backends.mps.is_available():
-    if not torch.backends.mps.is_built():
-        print("MPS not available because the current PyTorch install was not " "built with MPS enabled.")
-    else:
-        print(
-            "MPS not available because the current MacOS version is not 12.3+ "
-            "and/or you do not have an MPS-enabled device on this machine."
-        )
-
-
-# define point light(s)
-
-
-def create_point_lights_1():
-    point_lights_position_py = [[-10.0, 8.0, -2.0]]
-    point_lights_position_pt = torch.tensor(point_lights_position_py, dtype=torch.float, requires_grad=False, device=device)
-    n_point_lights = point_lights_position_pt.shape[0]
-    point_lights_rgb_py = [[220, 190, 120]]
-    point_lights_rgb_pt = torch.tensor(point_lights_rgb_py, dtype=torch.int, requires_grad=False, device=device)
-    assert point_lights_position_pt.shape == (n_point_lights, 3)
-    assert point_lights_rgb_pt.shape == (n_point_lights, 3)
-    point_lights_rgb_01_pt = torch.mul(point_lights_rgb_pt, one_over_255)
-    return n_point_lights, point_lights_position_pt, point_lights_rgb_pt, point_lights_rgb_01_pt
-
-
+# create point light(s)
 n_point_lights, point_lights_position, point_lights_rgb, point_lights_rgb_01 = create_point_lights_1()
-
 assert is_float_tensor_on_device(point_lights_position)
 assert is_int_tensor_on_device(point_lights_rgb)
 assert is_float_tensor_on_device(point_lights_rgb_01)
 
-
-# define spheres
-# each sphere is defined by its center in camera system coordinates and its radius
-
-
-def create_spheres_1():
-    spheres_center_py = [[-1.0, 0.0, 8.0], [2.0, -2.0, 12.0], [0.0, 0.0, 16.0], [-5.0, 0.0, 10.0], [2.2, -2.2, 6.7]]
-    spheres_center_pt = torch.tensor(spheres_center_py, dtype=torch.float, requires_grad=False, device=device)
-    n_spheres = spheres_center_pt.shape[0]
-    spheres_radius_py = [1.0, 4.0, 6.0, 1.0, 1.0]
-    spheres_radius_pt = torch.tensor(spheres_radius_py, dtype=torch.float, requires_grad=False, device=device)
-    spheres_rgb_py = [[150, 90, 200], [255, 144, 0], [200, 155, 255], [255, 0, 0], [123, 132, 231]]
-    spheres_rgb_pt = torch.tensor(spheres_rgb_py, dtype=torch.int, requires_grad=False, device=device)
-    assert spheres_center_pt.shape == (n_spheres, 3)
-    assert spheres_radius_pt.shape == (n_spheres,)
-    assert spheres_rgb_pt.shape == (n_spheres, 3)
-    spheres_rgb_01_pt = torch.mul(spheres_rgb_pt, one_over_255)
-    return n_spheres, spheres_center_pt, spheres_radius_pt, spheres_rgb_pt, spheres_rgb_01_pt
-
-
+# create spheres
 n_spheres, spheres_center, spheres_radius, spheres_rgb, spheres_rgb_01 = create_spheres_1()
-
 assert is_float_tensor_on_device(spheres_center)
 assert is_float_tensor_on_device(spheres_radius)
 assert is_int_tensor_on_device(spheres_rgb)
 assert is_float_tensor_on_device(spheres_rgb_01)
-
-see("spheres_center", spheres_center)
-assert is_float_tensor_on_device(spheres_center)
-
-see("spheres_radius", spheres_radius)
-assert is_float_tensor_on_device(spheres_radius)
-
-see("spheres_rgb", spheres_rgb)
 
 
 # compute primary rays
@@ -258,6 +204,13 @@ see_more("colors_d_and_s", colors_d_and_s, True)
 print(f"colors_d_and_s_01[middle_pixel_index]={colors_d_and_s_01[middle_pixel_index]}")
 print(f"colors_d_and_s[middle_pixel_index]={colors_d_and_s[middle_pixel_index]}")
 
+
+# now sample additional primary rays
+
+
+# plot
+
+
 plot_rgb_image_with_actual_size(spheres_rgb_hit, background_mask, resx_int_py, resy_int_py)
 plot_rgb_image_with_actual_size(colors_d_mixed, background_mask, resx_int_py, resy_int_py)
 plot_rgb_image_with_actual_size(colors_s_weighted, background_mask, resx_int_py, resy_int_py)
@@ -267,5 +220,9 @@ plot_all = True
 
 if plot_all:
     plot_vectors_with_color_by_z_value(points_hit, foreground_mask_with_0, [6, 16], "terrain")
-    plot_vectors_with_color_by_norm(surface_normals_hit, foreground_mask_with_0, [0, 12], "terrain", show_grid=False, show_axes=False)
-    plot_vectors_with_color_by_norm(point_light_rays, foreground_mask_with_0, [12, 30], "terrain", show_grid=False, show_axes=False)
+    plot_vectors_with_color_by_norm(
+        surface_normals_hit, foreground_mask_with_0, [0, 12], "terrain", show_grid=False, show_axes=False
+    )
+    plot_vectors_with_color_by_norm(
+        point_light_rays, foreground_mask_with_0, [12, 30], "terrain", show_grid=False, show_axes=False
+    )
