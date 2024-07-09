@@ -3,6 +3,9 @@ import torch.nn.functional as tf
 
 from ray_torch.camera.camera import eye
 from ray_torch.camera.camera import img_grid
+from ray_torch.camera.camera import img_grid_scaled
+from ray_torch.camera.camera import magx
+from ray_torch.camera.camera import magy
 from ray_torch.camera.camera import middle_pixel_index
 from ray_torch.camera.camera import n_pixels
 from ray_torch.camera.camera import px_ll
@@ -12,6 +15,7 @@ from ray_torch.camera.camera import px_ur
 from ray_torch.camera.camera import resx_int_py
 from ray_torch.camera.camera import resy
 from ray_torch.camera.camera import resy_int_py
+from ray_torch.camera.camera import sample_pixel_offsets_uniformly_randomly
 from ray_torch.constant.constant import one_dot_zero
 from ray_torch.constant.constant import two_55
 from ray_torch.intersection.intersection import intersect_rays_with_spheres
@@ -207,6 +211,17 @@ print(f"colors_d_and_s[middle_pixel_index]={colors_d_and_s[middle_pixel_index]}"
 
 # now sample additional primary rays
 
+offsets_x, offsets_y = sample_pixel_offsets_uniformly_randomly(magx, magy, resx_int_py, resy_int_py, n_pixels)
+see("magx", magx)
+see_more("offsets_x", offsets_x)
+see("magy", magy)
+see_more("offsets_y", offsets_y)
+
+see_more("img_grid_scaled", img_grid_scaled)
+
+img_grid_scaled_sampled = torch.add(torch.add(img_grid_scaled, offsets_x), offsets_y)
+see_more("img_grid_scaled_sampled", img_grid_scaled_sampled)
+
 
 # plot
 
@@ -226,3 +241,4 @@ if plot_all:
     plot_vectors_with_color_by_norm(
         point_light_rays, foreground_mask_with_0, [12, 30], "terrain", show_grid=False, show_axes=False
     )
+

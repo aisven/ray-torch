@@ -14,6 +14,31 @@ from ray_torch.utility.utility import normalize_vector
 from ray_torch.utility.utility import normalize_vector_custom
 from ray_torch.utility.utility import see
 
+
+def sample_pixel_offsets_uniformly_randomly(magx, magy, resx_int_py, resy_int_py, n_pixels):
+    n_pixels_anticipated = resx_int_py * resy_int_py
+    assert n_pixels == n_pixels_anticipated
+    max_value_x = (magx / 2.0)
+    min_value_x = max_value_x * -1.0
+    max_value_y = (magy / 2.0)
+    min_value_y = max_value_y * -1.0
+    uniform_dist_x = torch.distributions.Uniform(min_value_x, max_value_x)
+    uniform_dist_y = torch.distributions.Uniform(min_value_y, max_value_y)
+    shape_value = torch.Size((n_pixels, 1))
+
+    offsets_x_only = uniform_dist_x.sample(shape_value)
+    offsets_y_only = uniform_dist_y.sample(shape_value)
+
+    zeros_tensor_yz = torch.zeros(n_pixels, 2)
+    offsets_x = torch.cat((offsets_x_only, zeros_tensor_yz), dim=1)
+
+    zeros_tensor_x = torch.zeros(n_pixels, 1)
+    zeros_tensor_z = torch.zeros(n_pixels, 1)
+    offsets_y = torch.cat((zeros_tensor_x, offsets_y_only, zeros_tensor_z), dim=1)
+
+    return offsets_x, offsets_y
+
+
 near = create_tensor_on_device(0.1)
 far = create_tensor_on_device(100.0)
 
