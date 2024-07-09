@@ -292,15 +292,14 @@ img_grid_original_lasty = minus_one_dot_zero * ((resy / two_dot_zero) - resy_off
 
 img_grid_original = torch.cartesian_prod(
     torch.arange(
-        start=img_grid_original_firstx, end=img_grid_original_lastx, step=1.0, dtype=torch.float, requires_grad=False
+        start=img_grid_original_firstx, end=img_grid_original_lastx, step=1.0, dtype=torch.float, requires_grad=False, device=device
     ),
     torch.arange(
-        start=img_grid_original_firsty, end=img_grid_original_lasty, step=-1.0, dtype=torch.float, requires_grad=False
+        start=img_grid_original_firsty, end=img_grid_original_lasty, step=-1.0, dtype=torch.float, requires_grad=False, device=device
     ),
-    torch.tensor([0.0], dtype=torch.float, requires_grad=False),
+    torch.tensor([0.0], dtype=torch.float, requires_grad=False, device=device),
 )
 see("img_grid_original", img_grid_original)
-img_grid_original = img_grid_original.to(device)
 assert is_float_tensor_on_device(img_grid_original)
 
 n_pixels_anticipated = img_grid_original.shape[0]
@@ -309,7 +308,7 @@ assert n_pixels == n_pixels_anticipated
 
 # scale the image plane using the width of a pixel and the height of a pixel
 
-identity_matrix_3_by_3 = torch.eye(3, dtype=torch.float, requires_grad=False).to(device)
+identity_matrix_3_by_3 = torch.eye(3, dtype=torch.float, requires_grad=False, device=device)
 img_grid_scaling_matrix = identity_matrix_3_by_3 * create_tensor_on_device([magx, magy, 0.0])
 see("img_grid_scaling_matrix", img_grid_scaling_matrix, False)
 assert is_float_tensor_on_device(img_grid_scaling_matrix)
